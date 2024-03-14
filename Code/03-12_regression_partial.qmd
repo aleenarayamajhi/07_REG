@@ -822,5 +822,59 @@ ggplot(reg_dfw, aes(x = sr_ksha, y = yield_mgha))+
 
 -   Always check residuals! p-values alone do not tell you whether model is adequate for your data!
 
+# 10) Extra - bootstrapping
+Bootstrapping is a statistical procedure that **re-samples a single data set** to create many simulated samples.
+
+Bootstrapping is also referred to as **sampling with replacement**
+
+```{r}
+install.packages("infer")
+library(infer)
+
+boot <-reg_dfw %>%
+  specify(response = yield_mgha) %>%
+  generate(reps = 10000,
+           type = "bootstrap"
+           )
+
+boot
 
 
+```
+
+```{r}
+boot %>%
+  filter(replicate ==1) %>%
+  arrange(yield_mgha)
+```
+```{r}
+boot_mean <- boot %>%
+  calculate(stat = "mean")
+
+boot_mean
+```
+
+```{r}
+boot_ci <- boot_mean %>%
+  summarise(
+    lower = quantile(stat, 0.025),
+    upper = quantile(stat, 0.975)
+  
+  ) %>%
+  pivot_longer(cols = everything())
+
+boot_ci
+```
+#Vizualize mean and CI
+```{r}
+ggplot(data = boot_mean,
+       aes(x = stat)
+       ) +
+geom_density() +
+  geom_rug() +
+  geom_vline(data = boot_ci,
+             aes(xintercept = value)
+             )
+```
+
+#Interpretation
